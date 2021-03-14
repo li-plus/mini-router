@@ -1,7 +1,6 @@
 #include "physical_layer.h"
 #include "config.h"
 #include <string.h>
-#include <time.h>
 
 // ===== MAC TABLE =====
 typedef struct mac_entry {
@@ -68,17 +67,17 @@ void broadcast_packet(uint8_t *packet, size_t len, int if_idx) {
 static const struct ether_addr BROADCAST_MAC = {"\xff\xff\xff\xff\xff\xff"};
 
 _Noreturn void run_switch() {
-    int print_interval = 5;
-    clock_t last_time_fire = -CLOCKS_PER_SEC * print_interval;
+    int print_interval = 5000;
+    uint64_t last_time_fire = 0;
     while (1) {
-        clock_t curr_time = clock();
-        if ((curr_time - last_time_fire) / CLOCKS_PER_SEC > print_interval) {
+        uint64_t curr_time = get_clock_ms();
+        if (curr_time - last_time_fire >= print_interval) {
             print_mac_table();
             last_time_fire = curr_time;
         }
         int if_idx;
         uint8_t packet[BUFSIZ];
-        size_t len = recv_packet(1, packet, &if_idx);
+        size_t len = recv_packet(1000, packet, &if_idx);
         if (len == 0) {
             fprintf(stderr, "Recv packet time out for 1s\n");
             continue;

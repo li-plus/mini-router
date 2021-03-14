@@ -154,12 +154,12 @@ RC arp_get_mac(in_addr_t ip, int if_idx, struct ether_addr *out_mac) {
     return 0;
 }
 
-size_t recv_ip_packet(int timeout_sec, uint8_t *ip_packet, int *out_if_idx,
+size_t recv_ip_packet(int timeout_ms, uint8_t *ip_packet, int *out_if_idx,
                       struct ether_addr *out_src_mac, struct ether_addr *out_dst_mac) {
     while (1) {
         uint8_t packet[BUFSIZ];
         int if_idx;
-        uint32_t recv_len = recv_packet(timeout_sec, packet, &if_idx);
+        uint32_t recv_len = recv_packet(timeout_ms, packet, &if_idx);
         if (recv_len == 0) {
             return 0;
         }

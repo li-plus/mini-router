@@ -7,7 +7,6 @@
 #include <linux/udp.h>
 #include <string.h>
 #include <stdlib.h>
-#include <time.h>
 
 #define SWAP(a, b) do { typeof(a) __tmp = a; (a) = (b); (b) = __tmp; } while (0)
 
@@ -176,7 +175,7 @@ static void send_icmp_msg(uint8_t *ip_packet, size_t ip_len, int if_idx, uint8_t
 static const char RIP_MULTICAST_IP_STR[] = "224.0.0.9";
 static in_addr_t RIP_MULTICAST_IP;
 static struct ether_addr RIP_MULTICAST_MAC;
-static const int RIP_UPDATE_TIME = 5;   // send RIP response every 5 seconds
+static const int RIP_UPDATE_TIME = 5000;   // send RIP response every 5 seconds
 
 static void send_rip_response(int if_idx) {
     uint8_t ip_packet[BUFSIZ];
@@ -341,11 +340,11 @@ RC router_init() {
 }
 
 _Noreturn void run_router() {
-    clock_t last_timer_fire = -CLOCKS_PER_SEC * RIP_UPDATE_TIME;
+    uint64_t last_timer_fire = 0;
     while (1) {
         // Timer
-        clock_t curr_time = clock();
-        if ((curr_time - last_timer_fire) / CLOCKS_PER_SEC >= RIP_UPDATE_TIME) {
+        uint64_t curr_time = get_clock_ms();
+        if (curr_time - last_timer_fire >= RIP_UPDATE_TIME) {
             printf("Main timer fired, sending RIP response to all interfaces\n");
             for (int i = 0; i < NUM_IF; i++) {
                 send_rip_response(i);
@@ -357,7 +356,7 @@ _Noreturn void run_router() {
         struct ether_addr src_mac, dst_mac;
         int if_idx;
         uint8_t ip_packet[BUFSIZ];
-        size_t ip_len = recv_ip_packet(1, ip_packet, &if_idx, &src_mac, &dst_mac);
+        size_t ip_len = recv_ip_packet(1000, ip_packet, &if_idx, &src_mac, &dst_mac);
         if (ip_len == 0) {
             fprintf(stderr, "Recv packet time out for 1s\n");
             continue;
